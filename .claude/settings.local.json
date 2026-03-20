@@ -42,7 +42,11 @@
       "Bash(git add .claude/settings.local.json)",
       "Bash(git merge:*)",
       "Bash(python3:*)",
-      "Bash(git checkout main)"
+      "Bash(git checkout main)",
+      "Bash(ssh-add -l)",
+      "Bash(ls ~/.ssh/*.pub)",
+      "Bash(git remote set-url origin https://github.com/bernardolcr/d44-TMS.git)",
+      "Bash(git checkout -b transportation-app-v1.2)"
     ]
   }
 }
