@@ -969,14 +969,24 @@
     .log-bundle-tag {
       display: inline-flex;
       align-items: center;
-      background: var(--color-bg-info);
-      color: var(--color-primary-main);
+      background: transparent;
+      color: var(--color-text-tertiary);
+      border: 1px solid var(--color-border);
       font-size: 11px;
       font-weight: 500;
       line-height: 16px;
       padding: 2px 8px;
       border-radius: var(--radius-full);
       margin-bottom: 6px;
+    }
+    .log-bundle-agent {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--color-text-tertiary);
+      margin-bottom: 8px;
     }
 
     .log-bundle-see-more {
@@ -985,7 +995,7 @@
       gap: 4px;
       margin-top: 10px;
       padding-top: 10px;
-      border-top: 1px solid var(--color-bg-tertiary);
+      border-top: none;
       width: 100%;
       background: none;
       border-left: none;
@@ -1877,41 +1887,16 @@
               <div class="stat-value">0</div>
               <div class="stat-sub">Actions need attention</div>
             </div>
-            <!-- Shipments -->
+            <!-- Active Agents -->
             <div class="stat-cell">
               <div class="stat-cell-header">
                 <div class="stat-label" style="color:var(--color-primary-main)">
-                  <span class="material-icons-outlined" style="font-size:14px;color:var(--color-primary-main)">local_shipping</span>
-                  Shipments
+                  <span class="material-icons-outlined" style="font-size:14px;color:var(--color-primary-main)">support_agent</span>
+                  Active agents
                 </div>
-                <span class="material-icons-outlined stat-filter">filter_list</span>
               </div>
-              <div class="stat-value">53</div>
-              <div class="stat-sub">Actions in progress</div>
-            </div>
-            <!-- Procurement -->
-            <div class="stat-cell">
-              <div class="stat-cell-header">
-                <div class="stat-label" style="color:var(--color-primary-main)">
-                  <span class="material-icons-outlined" style="font-size:14px;color:var(--color-primary-main)">description</span>
-                  Procurement
-                </div>
-                <span class="material-icons-outlined stat-filter">filter_list</span>
-              </div>
-              <div class="stat-value">241</div>
-              <div class="stat-sub">Actions in progress</div>
-            </div>
-            <!-- Bookings -->
-            <div class="stat-cell">
-              <div class="stat-cell-header">
-                <div class="stat-label" style="color:var(--color-primary-main)">
-                  <span class="material-icons-outlined" style="font-size:14px;color:var(--color-primary-main)">calendar_today</span>
-                  Bookings
-                </div>
-                <span class="material-icons-outlined stat-filter">filter_list</span>
-              </div>
-              <div class="stat-value">32</div>
-              <div class="stat-sub">Actions in progress</div>
+              <div class="stat-value">7</div>
+              <div class="stat-sub">Currently running</div>
             </div>
           </div>
         </div>
@@ -1923,6 +1908,7 @@
           <!-- Bundle 1: Carrier disruption response -->
           <div class="log-bundle" id="bundle-finding-carriers">
             <div class="log-bundle-header">
+              <div class="log-bundle-agent"><div class="live-dot"></div>Rebooking Agent</div>
               <span class="log-bundle-tag">Finding new carriers for missing pick-ups</span>
               <div class="log-bundle-reasoning">Echo Logistics failed to pick up order 55568443. Sourcing a replacement carrier and updating lane preferences to prevent repeat disruptions.</div>
             </div>
@@ -1952,13 +1938,14 @@
             </div>
             <button class="log-bundle-see-more">
               See more
-              <span class="material-icons-outlined" style="font-size:14px">expand_more</span>
+              <span class="material-icons-outlined" style="font-size:14px">arrow_forward</span>
             </button>
           </div>
 
           <!-- Bundle 2: Nashville lane performance -->
           <div class="log-bundle">
             <div class="log-bundle-header">
+              <div class="log-bundle-agent"><div class="live-dot"></div>Lane Intelligence Agent</div>
               <span class="log-bundle-tag">Optimizing carrier contracts per lane</span>
               <div class="log-bundle-reasoning">Carrier performance on Nashville-origin lanes is below target. Renegotiating rates and replacing underperforming carriers on two affected routes.</div>
             </div>
@@ -1988,13 +1975,14 @@
             </div>
             <button class="log-bundle-see-more">
               See more
-              <span class="material-icons-outlined" style="font-size:14px">expand_more</span>
+              <span class="material-icons-outlined" style="font-size:14px">arrow_forward</span>
             </button>
           </div>
 
           <!-- Bundle 3: Contract renewals -->
           <div class="log-bundle">
             <div class="log-bundle-header">
+              <div class="log-bundle-agent"><div class="live-dot"></div>Contract Negotiation Agent</div>
               <span class="log-bundle-tag">Negotiating ending contracts</span>
               <div class="log-bundle-reasoning">Two contracts are expiring within 30 days. Negotiating terms and sending renewal proposals before the deadline to maintain lane coverage.</div>
             </div>
@@ -2026,7 +2014,7 @@
             </div>
             <button class="log-bundle-see-more">
               See more
-              <span class="material-icons-outlined" style="font-size:14px">expand_more</span>
+              <span class="material-icons-outlined" style="font-size:14px">arrow_forward</span>
             </button>
           </div>
 
@@ -2459,8 +2447,8 @@
       actions.forEach((el, i) => el.classList.toggle('log-action--hidden', i >= MAX_VISIBLE));
       const hidden = actions.length - Math.min(actions.length, MAX_VISIBLE);
       seeMoreBtn.innerHTML = hidden > 0
-        ? `${hidden} more action${hidden > 1 ? 's' : ''} <span class="material-icons-outlined" style="font-size:14px">expand_more</span>`
-        : `See more <span class="material-icons-outlined" style="font-size:14px">expand_more</span>`;
+        ? `${hidden} more action${hidden > 1 ? 's' : ''} <span class="material-icons-outlined" style="font-size:14px">arrow_forward</span>`
+        : `See more <span class="material-icons-outlined" style="font-size:14px">arrow_forward</span>`;
     }
 
     function completeIcon(iconEl) {
