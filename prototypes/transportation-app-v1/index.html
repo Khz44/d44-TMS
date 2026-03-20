@@ -1136,17 +1136,23 @@
     }
     /* ─── Drawer Overlay ─── */
     .drawer-overlay {
-      display: none;
+      display: block;
       position: fixed;
       inset: 0;
       background: var(--color-bg-overlay);
       z-index: 250;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
     }
-    .drawer-overlay.open { display: block; }
+    .drawer-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
 
     /* ─── Drawer Panel ─── */
     .drawer {
-      display: none;
+      display: flex;
       position: fixed;
       top: 0;
       right: 0;
@@ -1157,8 +1163,12 @@
       z-index: 260;
       overflow-y: auto;
       flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .drawer.open { display: flex; }
+    .drawer.open {
+      transform: translateX(0);
+    }
 
     .drawer-header {
       display: flex;
