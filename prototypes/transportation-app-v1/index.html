@@ -331,7 +331,7 @@
       border: 1px solid transparent;
       transition: border-color 0.15s;
     }
-    .card:hover { border-color: var(--color-indigo-200); }
+    .card:hover { border-color: var(--color-indigo-200); cursor: pointer; }
     .card--static:hover { border-color: transparent; }
     .card--new-alert { border-color: var(--color-primary-main); }
 
@@ -1454,7 +1454,7 @@
     .agent-kpi-cell {
       background: var(--color-bg-default);
       border: 1px solid var(--color-border);
-      border-radius: var(--radius-medium);
+      border-radius: var(--radius-small);
       padding: 10px 12px;
     }
     .agent-kpi-cell.urgent {
@@ -1529,15 +1529,15 @@
         <div class="sidebar-chat">
           <div class="sidebar-section-label">Chat</div>
           <div class="chat-item">
-            <span class="material-icons-outlined">chat_bubble</span>
+            <span class="material-icons-outlined">chat_bubble_outline</span>
             <span class="chat-item-text">Compare carrier performance to opt...</span>
           </div>
           <div class="chat-item">
-            <span class="material-icons-outlined">chat_bubble</span>
+            <span class="material-icons-outlined">chat_bubble_outline</span>
             <span class="chat-item-text">Alternative route to save costs on m...</span>
           </div>
           <div class="chat-item">
-            <span class="material-icons-outlined">chat_bubble</span>
+            <span class="material-icons-outlined">chat_bubble_outline</span>
             <span class="chat-item-text">What is the estimate delay select fr...</span>
           </div>
         </div>
@@ -1940,7 +1940,7 @@
 
         <!-- Action log -->
         <div class="action-log">
-          <div class="action-log-title">Action log</div>
+          <div class="action-log-title">Active agents</div>
 
           <!-- Bundle 1: Carrier disruption response -->
           <div class="log-bundle" id="bundle-finding-carriers">
