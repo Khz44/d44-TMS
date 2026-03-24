@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stock-Out Prevention — project44 Vision Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
+  <style>
+    /* ─── Design Tokens ─── */
+    :root {
+      --color-primary-main:   #4f4cf3;
+      --color-primary-hover:  #3836d4;
+      --color-primary-active: #16147f;
+
+      --color-bg-default:     #ffffff;
+      --color-bg-subtle:      #f9fafb;
+      --color-bg-secondary:   #f3f4f6;
+      --color-bg-tertiary:    #e5e7eb;
+      --color-bg-danger:      #fef2f2;
+      --color-bg-success:     #ecfdf5;
+      --color-bg-info:        #e8ebff;
+      --color-bg-warning:     #fef3c7;
+
+      --color-border:         #e5e7eb;
+      --color-border-danger:  #991b1b;
+
+      --color-text-primary:   #030712;
+      --color-text-secondary: #374151;
+      --color-text-tertiary:  #6b7280;
+      --color-text-contrast:  #ffffff;
+      --color-text-danger:    #b91c1c;
+      --color-text-success:   #047857;
+      --color-text-warning:   #ba7500;
+      --color-text-info:      #5f5cff;
+      --color-text-disabled:  #9ca3af;
+
+      --color-indigo-100:     #bfc7ff;
+      --color-indigo-200:     #9ba4ff;
+      --color-indigo-500:     #5f5cff;
+      --color-indigo-700:     #3836d4;
+
+      --color-grey-300:       #d1d5db;
+      --color-grey-400:       #9ca3af;
+      --color-grey-500:       #6b7280;
+
+      --color-green-300:      #6ee7b7;
+      --color-yellow-500:     #faa30f;
+
+      --color-gradient-pi-500: #6340cd;
+      --color-gradient-pi-600: #4b38d0;
+
+      --radius-xsmall:  4px;
+      --radius-small:   8px;
+      --radius-medium:  16px;
+      --radius-large:   24px;
+      --radius-full:    9999px;
+
+      --shadow-light-small:  0px 4px 16px -8px rgba(56,54,212,0.16), 0px 0px 1px 0px rgba(56,54,212,0.5);
+      --shadow-light-medium: 0px 12px 16px -8px rgba(56,54,212,0.08), 0px 2px 2px 0px rgba(56,54,212,0.07), 0px -1px 2px 0px rgba(56,54,212,0.02);
+      --shadow-elevation-small: 0px 1px 3px 0px rgba(24,24,25,0.16);
+      --effect-input-focus: 0px 0px 0px 3px #a5aee8, 0px 0px 0px 1px #ffffff;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Inter, sans-serif;
+      background: #f5f5fa;
+      color: var(--color-text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .material-icons-outlined {
+      font-family: 'Material Icons Outlined';
+      font-weight: normal; font-style: normal; line-height: 1;
+      letter-spacing: normal; text-transform: none;
+      display: inline-block; white-space: nowrap; word-wrap: normal;
+      direction: ltr; -webkit-font-smoothing: antialiased;
+      user-select: none;
+    }
+
+    .screen { display: none; min-height: 100vh; }
+    .screen.active { display: block; }
+
+    .sidebar {
+      position: fixed; left: 0; top: 0;
+      height: 100vh; width: 332px;
+      padding: 24px; z-index: 200;
+      display: flex; flex-direction: column;
+    }
+    .sidebar-card {
+      background: var(--color-bg-default);
+      border-radius: var(--radius-large);
+      box-shadow: var(--shadow-light-medium);
+      display: flex; flex-direction: column;
+      height: 100%; overflow: hidden;
+      padding: 20px; gap: 0;
+    }
+    .sidebar-logo-pill {
+      display: flex; align-items: center; gap: 10px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-full);
+      padding: 6px 14px 6px 6px;
+      margin-bottom: 20px; cursor: pointer;
+    }
+    .logo-badge {
+      width: 32px; height: 32px;
+      background: var(--color-primary-main);
+      border-radius: var(--radius-full);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-size: 12px; font-weight: 700;
+      color: var(--color-text-contrast); letter-spacing: -0.02em;
+    }
+    .logo-name { flex: 1; font-size: 14px; font-weight: 600; color: var(--color-text-primary); letter-spacing: -0.01em; }
+    .logo-caret { font-size: 18px; color: var(--color-text-tertiary); }
+    .sidebar-nav { display: flex; flex-direction: column; gap: 2px; }
+    .sidebar-section-label {
+      font-size: 11px; font-weight: 600; color: var(--color-text-disabled);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      padding: 0 12px; margin-top: 16px; margin-bottom: 4px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 12px; border-radius: var(--radius-small);
+      font-size: 14px; font-weight: 400; line-height: 20px;
+      color: var(--color-text-secondary); cursor: pointer;
+      transition: background 0.12s;
+    }
+    .nav-item:hover { background: var(--color-bg-secondary); }
+    .nav-item.active { background: var(--color-bg-secondary); font-weight: 600; color: var(--color-text-primary); }
+    .nav-item .material-icons-outlined { font-size: 16px; color: var(--color-text-tertiary); }
+    .nav-item.active .material-icons-outlined { color: var(--color-primary-main); }
+    .nav-badge {
+      margin-left: auto; min-width: 18px; height: 18px;
+      background: var(--color-text-danger); color: #fff;
+      border-radius: var(--radius-full); font-size: 11px; font-weight: 600;
+      display: flex; align-items: center; justify-content: center; padding: 0 5px;
+    }
+    .sidebar-footer { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--color-border); }
+    .sidebar-user { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: var(--radius-small); cursor: pointer; }
+    .avatar-initials {
+      width: 32px; height: 32px;
+      background: var(--color-bg-info); border-radius: var(--radius-full);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; color: var(--color-primary-main); flex-shrink: 0;
+    }
+    .sidebar-user-info { flex: 1; min-width: 0; }
+    .sidebar-user-name { font-size: 14px; font-weight: 500; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sidebar-user-role { font-size: 12px; color: var(--color-text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .main-content { margin-left: 332px; margin-right: 424px; min-height: 100vh; padding: 40px 24px 200px; }
+    .content-inner { max-width: 900px; margin: 0 auto; }
+    .page-heading { font-size: 24px; font-weight: 400; line-height: 32px; letter-spacing: -0.02em; color: var(--color-text-primary); margin-bottom: 24px; }
+    .page-heading strong { font-weight: 700; }
+
+    .card {
+      background: var(--color-bg-default);
+      border-radius: var(--radius-large);
+      box-shadow: var(--shadow-light-medium);
+      padding: 24px; margin-bottom: 16px;
+      border: 1px solid transparent;
+      transition: border-color 0.15s;
+    }
+    .card:hover { border-color: var(--color-indigo-200); }
+    .card--static:hover { border-color: transparent; }
+    .card--alert { border-color: var(--color-text-danger) !important; }
+    .card--warning { border-color: var(--color-yellow-500) !important; }
+    .card--success { border-color: var(--color-green-300) !important; }
+    .card--critical { border-color: var(--color-text-danger) !important; background: var(--color-bg-danger); }
+
+    .card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+    .card-title-group { display: flex; align-items: flex-start; gap: 14px; }
+    .card-icon { width: 40px; height: 40px; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .card-icon--danger  { background: var(--color-bg-danger); }
+    .card-icon--warning { background: var(--color-bg-warning); }
+    .card-icon--success { background: var(--color-bg-success); }
+    .card-icon--info    { background: var(--color-bg-info); }
+    .card-icon--primary { background: var(--color-primary-main); }
+    .card-icon .material-icons-outlined { font-size: 18px; }
+    .card-icon--danger  .material-icons-outlined { color: var(--color-text-danger); }
+    .card-icon--warning .material-icons-outlined { color: var(--color-text-warning); }
+    .card-icon--success .material-icons-outlined { color: var(--color-text-success); }
+    .card-icon--info    .material-icons-outlined { color: var(--color-text-info); }
+    .card-icon--primary .material-icons-outlined { color: #fff; }
+    .card-title { font-size: 16px; font-weight: 700; line-height: 24px; letter-spacing: -0.01em; color: var(--color-text-primary); margin-bottom: 2px; }
+    .card-subtitle { font-size: 13px; line-height: 18px; color: var(--color-text-tertiary); }
+    .card-badge-row { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+
+    .pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: var(--radius-full); font-size: 12px; font-weight: 600; line-height: 18px; white-space: nowrap; }
+    .pill .material-icons-outlined { font-size: 12px; }
+    .pill--danger  { background: var(--color-bg-danger);  color: var(--color-text-danger); }
+    .pill--warning { background: var(--color-bg-warning); color: var(--color-text-warning); }
+    .pill--success { background: var(--color-bg-success); color: var(--color-text-success); }
+    .pill--info    { background: var(--color-bg-info);    color: var(--color-text-info); }
+    .pill--neutral { background: var(--color-bg-secondary); color: var(--color-text-secondary); }
+
+    .metrics-row { display: flex; gap: 10px; margin-bottom: 20px; }
+    .metric-chip { flex: 1; display: flex; align-items: center; gap: 10px; background: var(--color-bg-default); border: 1px solid var(--color-border); border-radius: 12px; padding: 12px; min-width: 0; }
+    .metric-icon-wrap { width: 36px; height: 36px; border-radius: var(--radius-small); background: rgba(232,235,255,0.5); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .metric-icon-wrap .material-icons-outlined { font-size: 16px; color: var(--color-primary-main); }
+    .metric-icon-wrap--danger  { background: rgba(254,242,242,0.7); }
+    .metric-icon-wrap--danger  .material-icons-outlined { color: var(--color-text-danger); }
+    .metric-icon-wrap--warning { background: rgba(254,243,199,0.7); }
+    .metric-icon-wrap--warning .material-icons-outlined { color: var(--color-text-warning); }
+    .metric-icon-wrap--success { background: rgba(236,253,245,0.7); }
+    .metric-icon-wrap--success .material-icons-outlined { color: var(--color-text-success); }
+    .metric-value { font-size: 18px; font-weight: 700; line-height: 24px; letter-spacing: -0.01em; color: var(--color-text-secondary); }
+    .metric-value--danger  { color: var(--color-text-danger); }
+    .metric-value--warning { color: var(--color-text-warning); }
+    .metric-value--success { color: var(--color-text-success); }
+    .metric-label { font-size: 11px; line-height: 16px; color: var(--color-text-tertiary); margin-top: 1px; }
+
+    .shipment-table { width: 100%; border-collapse: collapse; }
+    .shipment-table th { text-align: left; padding: 8px 12px; font-size: 12px; font-weight: 600; color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border); }
+    .shipment-table td { padding: 12px; font-size: 13px; line-height: 18px; color: var(--color-text-secondary); border-bottom: 1px solid var(--color-bg-secondary); vertical-align: middle; }
+    .shipment-table tr:last-child td { border-bottom: none; }
+    .shipment-table tr:hover td { background: var(--color-bg-subtle); }
+    .shipment-id { font-weight: 600; color: var(--color-text-primary); font-size: 13px; }
+    .shipment-sub { font-size: 12px; color: var(--color-text-tertiary); margin-top: 2px; }
+
+    .timeline-bar { display: flex; align-items: center; gap: 0; margin-bottom: 20px; padding: 16px; background: var(--color-bg-subtle); border-radius: var(--radius-small); border: 1px solid var(--color-border); }
+    .tl-node { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
+    .tl-dot { width: 12px; height: 12px; border-radius: var(--radius-full); border: 2px solid; flex-shrink: 0; }
+    .tl-dot--now    { border-color: var(--color-text-success); background: var(--color-bg-success); }
+    .tl-dot--pack   { border-color: var(--color-text-warning); background: var(--color-bg-warning); }
+    .tl-dot--stock  { border-color: var(--color-text-danger);  background: var(--color-bg-danger); }
+    .tl-label { font-size: 11px; font-weight: 600; color: var(--color-text-tertiary); white-space: nowrap; }
+    .tl-label--danger { color: var(--color-text-danger); }
+    .tl-line { flex: 1; height: 2px; margin: 0 6px; margin-bottom: 18px; }
+    .tl-line--ok   { background: var(--color-green-300); }
+    .tl-line--warn { background: var(--color-yellow-500); }
+
+    .action-items { display: flex; flex-direction: column; gap: 8px; }
+    .action-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; background: var(--color-bg-subtle); border: 1px solid var(--color-border); border-radius: var(--radius-small); }
+    .action-item-icon { width: 28px; height: 28px; border-radius: var(--radius-xsmall); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .action-item-icon .material-icons-outlined { font-size: 14px; }
+    .action-item-body { flex: 1; min-width: 0; }
+    .action-item-label { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
+    .action-item-text { font-size: 13px; line-height: 18px; color: var(--color-text-secondary); }
+
+    .step-list { display: flex; flex-direction: column; gap: 10px; }
+    .step-item { display: flex; align-items: flex-start; gap: 12px; }
+    .step-num { width: 24px; height: 24px; border-radius: var(--radius-full); background: var(--color-primary-main); color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+    .step-content { flex: 1; }
+    .step-title { font-size: 14px; font-weight: 600; color: var(--color-text-primary); margin-bottom: 2px; }
+    .step-desc  { font-size: 13px; line-height: 18px; color: var(--color-text-tertiary); }
+
+    .approval-banner { display: flex; align-items: flex-start; gap: 14px; padding: 16px; border-radius: var(--radius-small); background: var(--color-bg-warning); border: 1px solid #fbbf24; margin-bottom: 16px; }
+    .approval-banner .material-icons-outlined { color: var(--color-text-warning); flex-shrink: 0; margin-top: 2px; }
+    .approval-banner-body { flex: 1; }
+    .approval-banner-title { font-size: 14px; font-weight: 600; color: var(--color-text-primary); margin-bottom: 4px; }
+    .approval-banner-desc  { font-size: 13px; line-height: 18px; color: var(--color-text-secondary); }
+
+    .msg-draft { background: var(--color-bg-subtle); border: 1px solid var(--color-border); border-radius: var(--radius-small); padding: 14px; margin-top: 12px; }
+    .msg-draft-to { font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 8px; }
+    .msg-draft-body { font-size: 13px; line-height: 20px; color: var(--color-text-secondary); font-family: 'Courier New', monospace; white-space: pre-wrap; }
+
+    .event-feed { display: flex; flex-direction: column; gap: 0; }
+    .event-row { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--color-bg-secondary); }
+    .event-row:last-child { border-bottom: none; }
+    .event-dot-col { display: flex; flex-direction: column; align-items: center; padding-top: 4px; }
+    .event-dot { width: 10px; height: 10px; border-radius: var(--radius-full); flex-shrink: 0; margin-bottom: 2px; }
+    .event-dot--danger  { background: var(--color-text-danger); }
+    .event-dot--warning { background: var(--color-text-warning); }
+    .event-dot--success { background: var(--color-text-success); }
+    .event-dot--neutral { background: var(--color-text-disabled); }
+    .event-line { flex: 1; width: 1px; background: var(--color-bg-tertiary); margin-top: 2px; min-height: 20px; }
+    .event-body { flex: 1; min-width: 0; }
+    .event-title { font-size: 13px; font-weight: 600; color: var(--color-text-primary); margin-bottom: 2px; }
+    .event-desc  { font-size: 12px; line-height: 18px; color: var(--color-text-tertiary); }
+    .event-time  { font-size: 11px; color: var(--color-text-disabled); margin-top: 3px; }
+
+    .section-divider { height: 1px; background: var(--color-border); margin: 20px 0; }
+    .section-label { font-size: 12px; font-weight: 600; color: var(--color-text-tertiary); margin-bottom: 10px; }
+
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 0 16px; height: 36px; border-radius: var(--radius-small); font-family: Inter, sans-serif; font-size: 14px; font-weight: 600; line-height: 20px; cursor: pointer; border: 1px solid transparent; transition: background 0.12s, border-color 0.12s; }
+    .btn .material-icons-outlined { font-size: 16px; }
+    .btn--primary { background: var(--color-primary-main); color: #fff; border-color: var(--color-primary-main); }
+    .btn--primary:hover { background: var(--color-primary-hover); border-color: var(--color-primary-hover); }
+    .btn--secondary { background: var(--color-bg-default); color: var(--color-text-secondary); border-color: var(--color-border); }
+    .btn--secondary:hover { background: var(--color-bg-secondary); }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+
+    .esc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+    .esc-tile { padding: 14px; border-radius: var(--radius-small); border: 1px solid var(--color-border); background: var(--color-bg-default); }
+    .esc-tile-icon { margin-bottom: 8px; }
+    .esc-tile-icon .material-icons-outlined { font-size: 20px; }
+    .esc-tile-title { font-size: 13px; font-weight: 600; color: var(--color-text-primary); margin-bottom: 4px; }
+    .esc-tile-desc  { font-size: 12px; line-height: 18px; color: var(--color-text-tertiary); }
+
+    .monitor-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .monitor-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: var(--radius-full); font-size: 12px; font-weight: 500; background: var(--color-bg-info); color: var(--color-text-info); border: 1px solid var(--color-indigo-100); }
+    .monitor-chip .material-icons-outlined { font-size: 12px; }
+
+    .ai-chat-bar { position: fixed; bottom: 24px; left: 332px; right: 424px; padding: 0 16px; z-index: 150; }
+    .ai-chat-card { background: var(--color-bg-default); border: 1px solid var(--color-border); border-radius: var(--radius-large); box-shadow: var(--shadow-light-medium); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .ai-chat-card:focus-within { border-color: var(--color-primary-main); }
+    .ai-chat-textarea { width: 100%; border: none; outline: none; resize: none; font-family: Inter, sans-serif; font-size: 16px; line-height: 24px; letter-spacing: -0.01em; color: var(--color-text-primary); background: transparent; min-height: 28px; }
+    .ai-chat-textarea::placeholder { color: #a9adb1; }
+    .ai-chat-toolbar { display: flex; align-items: center; justify-content: space-between; }
+    .ai-chat-toolbar-left { display: flex; align-items: center; gap: 8px; }
+    .ai-chat-toolbar-right { display: flex; align-items: center; gap: 8px; }
+    .ai-chat-icon-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: none; border-radius: var(--radius-small); background: transparent; color: var(--color-text-secondary); cursor: pointer; transition: background 0.12s; }
+    .ai-chat-icon-btn:hover { background: var(--color-bg-secondary); }
+    .ai-chat-icon-btn .material-icons-outlined { font-size: 18px; }
+    .ai-chat-send-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: none; border-radius: 50%; background: var(--color-primary-main); color: #fff; cursor: pointer; transition: background 0.12s; }
+    .ai-chat-send-btn:hover { background: var(--color-primary-hover); }
+    .ai-chat-send-btn .material-icons-outlined { font-size: 18px; }
+
+    .action-panel { position: fixed; right: 0; top: 0; height: 100vh; width: 424px; padding: 24px; z-index: 200; display: flex; flex-direction: column; }
+    .action-panel-card { background: var(--color-bg-default); border-radius: var(--radius-large); box-shadow: var(--shadow-light-medium); display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+    .panel-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--color-border); flex-shrink: 0; }
+    .panel-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+    .panel-title { font-size: 16px; font-weight: 700; line-height: 24px; letter-spacing: -0.01em; color: var(--color-gradient-pi-500); }
+
+    @keyframes livePulse {
+      0%   { box-shadow: 0 0 0 0 rgba(16,185,129,0.5); }
+      70%  { box-shadow: 0 0 0 6px rgba(16,185,129,0); }
+      100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+    }
+    .live-indicator { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: #10b981; font-weight: 500; }
+    .live-dot { width: 8px; height: 8px; border-radius: var(--radius-full); background: #10b981; flex-shrink: 0; animation: livePulse 2s ease-out infinite; }
+    .panel-subtitle { font-size: 13px; color: var(--color-text-tertiary); }
+
+    .panel-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 16px 24px; border-bottom: 1px solid var(--color-border); flex-shrink: 0; }
+    .panel-stat { background: var(--color-bg-subtle); border-radius: var(--radius-small); padding: 10px 12px; }
+    .panel-stat-label { font-size: 11px; font-weight: 600; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+    .panel-stat-value { font-size: 20px; font-weight: 700; line-height: 28px; letter-spacing: -0.02em; }
+    .panel-stat-value--danger  { color: var(--color-text-danger); }
+    .panel-stat-value--warning { color: var(--color-text-warning); }
+    .panel-stat-value--success { color: var(--color-text-success); }
+    .panel-stat-sub { font-size: 11px; color: var(--color-text-disabled); margin-top: 2px; }
+
+    .panel-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+    .panel-body::-webkit-scrollbar { width: 4px; }
+    .panel-body::-webkit-scrollbar-track { background: transparent; }
+    .panel-body::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: var(--radius-full); }
+    .panel-section-label { font-size: 12px; font-weight: 600; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 10px; }
+
+    .log-bundle { background: var(--color-bg-default); border: 1px solid var(--color-border); border-radius: var(--radius-medium); padding: 12px; margin-bottom: 8px; }
+    .log-bundle-tag { display: inline-flex; align-items: center; background: var(--color-bg-info); color: var(--color-text-info); font-size: 11px; font-weight: 500; line-height: 16px; padding: 2px 8px; border-radius: var(--radius-full); margin-bottom: 6px; }
+    .log-bundle-text { font-size: 12px; line-height: 18px; color: var(--color-text-tertiary); margin-bottom: 4px; }
+    .log-action { display: flex; align-items: flex-start; gap: 7px; padding: 6px 0; border-top: 1px solid var(--color-bg-secondary); font-size: 13px; line-height: 18px; color: var(--color-text-secondary); }
+    .log-action:first-of-type { border-top: none; }
+    .log-action .material-icons-outlined { font-size: 14px; flex-shrink: 0; margin-top: 2px; }
+    .log-action--done   .material-icons-outlined { color: var(--color-text-success); }
+    .log-action--active .material-icons-outlined { color: var(--color-primary-main); }
+    .log-action--warn   .material-icons-outlined { color: var(--color-text-warning); }
+
+    .demo-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--color-bg-default); border-top: 1px solid var(--color-border); z-index: 300; display: flex; align-items: center; padding: 12px 24px; gap: 12px; }
+    .demo-nav-label { font-size: 12px; font-weight: 600; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; margin-right: 8px; }
+    .demo-step { display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: var(--radius-full); font-size: 13px; font-weight: 500; color: var(--color-text-secondary); border: 1px solid var(--color-border); background: transparent; cursor: pointer; transition: all 0.15s; font-family: inherit; }
+    .demo-step:hover { background: var(--color-bg-secondary); border-color: var(--color-indigo-200); }
+    .demo-step.current { background: var(--color-primary-main); color: #fff; border-color: var(--color-primary-main); }
+    .demo-step-num { width: 20px; height: 20px; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; background: rgba(255,255,255,0.2); }
+    .demo-step:not(.current) .demo-step-num { background: var(--color-bg-secondary); color: var(--color-text-tertiary); }
+    .demo-nav-arrow { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+    .demo-nav-btn { display: flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: var(--radius-small); font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; border: 1px solid; transition: all 0.12s; }
+    .demo-nav-btn--prev { background: var(--color-bg-default); color: var(--color-text-secondary); border-color: var(--color-border); }
+    .demo-nav-btn--prev:hover { background: var(--color-bg-secondary); }
+    .demo-nav-btn--next { background: var(--color-primary-main); color: #fff; border-color: var(--color-primary-main); }
+    .demo-nav-btn--next:hover { background: var(--color-primary-hover); border-color: var(--color-primary-hover); }
+    .demo-nav-btn .material-icons-outlined { font-size: 16px; }
+
+    .panel-content { display: none; }
+    .panel-content.active { display: block; }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-card">
+    <div class="sidebar-logo-pill">
+      <div class="logo-badge">p44</div>
+      <span class="logo-name">project44</span>
+      <span class="material-icons-outlined logo-caret">unfold_more</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-label">Visibility</div>
+      <div class="nav-item"><span class="material-icons-outlined">dashboard</span>Dashboard</div>
+      <div class="nav-item active"><span class="material-icons-outlined">warning_amber</span>Stock-Out Risk<span class="nav-badge">1</span></div>
+      <div class="nav-item"><span class="material-icons-outlined">local_shipping</span>Shipments</div>
+      <div class="nav-item"><span class="material-icons-outlined">inventory_2</span>Inventory</div>
+      <div class="sidebar-section-label">Planning</div>
+      <div class="nav-item"><span class="material-icons-outlined">factory</span>Production</div>
+      <div class="nav-item"><span class="material-icons-outlined">precision_manufacturing</span>Procurement</div>
+      <div class="nav-item"><span class="material-icons-outlined">trending_up</span>Demand Sensing</div>
+      <div class="sidebar-section-label">Config</div>
+      <div class="nav-item"><span class="material-icons-outlined">tune</span>Policies</div>
+      <div class="nav-item"><span class="material-icons-outlined">notifications_none</span>Notifications</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="avatar-initials">PS</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name">Priya Sharma</div>
+          <div class="sidebar-user-role">Production Planner</div>
+        </div>
+        <span class="material-icons-outlined" style="font-size:16px;color:var(--color-text-tertiary)">more_vert</span>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<aside class="action-panel">
+  <div class="action-panel-card">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <span class="panel-title">Agent Actions</span>
+        <span class="live-indicator"><span class="live-dot"></span>Live</span>
+      </div>
+      <div class="panel-subtitle" id="panel-subtitle">Monitoring Case #3829 · SKU A23 × Marysville</div>
+    </div>
+    <div class="panel-stats">
+      <div class="panel-stat">
+        <div class="panel-stat-label">Severity</div>
+        <div class="panel-stat-value panel-stat-value--danger" id="stat-severity">High</div>
+        <div class="panel-stat-sub">Elevated</div>
+      </div>
+      <div class="panel-stat">
+        <div class="panel-stat-label">Time to Stock-out</div>
+        <div class="panel-stat-value panel-stat-value--warning" id="stat-time">3h 42m</div>
+        <div class="panel-stat-sub">14:30 deadline</div>
+      </div>
+      <div class="panel-stat">
+        <div class="panel-stat-label">Viable Paths</div>
+        <div class="panel-stat-value panel-stat-value--success" id="stat-paths">1 of 3</div>
+        <div class="panel-stat-sub">S109 confirmed</div>
+      </div>
+      <div class="panel-stat">
+        <div class="panel-stat-label">Case</div>
+        <div class="panel-stat-value" style="font-size:16px;" id="stat-case">#3829</div>
+        <div class="panel-stat-sub">Open · 2h 14m</div>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="panel-content active" id="panel-s1">
+        <div class="panel-section-label">Agent reasoning</div>
+        <div class="log-bundle">
+          <div class="log-bundle-tag">Risk correlation</div>
+          <div class="log-bundle-text">Three signals converged: stock-out moved earlier, best ETA slipped, and cross-dock dwell exceeded threshold. Severity raised to High.</div>
+          <div class="log-action log-action--done"><span class="material-icons-outlined">check_circle</span>Stock-out timestamp drift detected (−2h)</div>
+          <div class="log-action log-action--done"><span class="material-icons-outlined">check_circle</span>S123 ETA now 15:10 — past 14:30 deadline</div>
+          <div class="log-action log-action--warn"><span class="material-icons-outlined">error_outline</span>ASN A77 unloaded at IAD — no load event in 4h</div>
+        </div>
+        <div class="log-bundle" style="margin-top:8px;">
+          <div class="log-bundle-tag">Recommended action</div>
+          <div class="log-bundle-text">S109 is the last viable inbound path. Prioritize verification and monitor ASN A77 reload status.</div>
+          <div class="log-action log-action--active"><span class="material-icons-outlined">sync</span>Watching for Loaded event on ASN A77</div>
+          <div class="log-action log-action--active"><span class="material-icons-outlined">sync</span>Tracking S109 ETA confidence</div>
+        </div>
+      </div>
+      <div class="panel-content" id="panel-s2">
+        <div class="panel-section-label">Three clocks being monitored</div>
+        <div class="log-bundle">
+          <div class="log-bundle-tag">Now → Pack-time → Stock-out</div>
+          <div class="log-bundle-text">10:48 → 12:30 → 14:30. Pack-time is 1h 42m away. Stock-out is 3h 42m away.</div>
+          <div class="log-action log-action--done"><span class="material-icons-outlined">check_circle</span>S109 direct route confirmed — ETA 11:50</div>
+          <div class="log-action log-action--warn"><span class="material-icons-outlined">error_outline</span>A77 dwell exceeds threshold — confirm reload</div>
+          <div class="log-action log-action--done"><span class="material-icons-outlined">cancel</span>S123 eliminated — ETA past deadline</div>
+        </div>
+        <div class="log-bundle" style="margin-top:8px;">
+          <div class="log-bundle-tag">Severity logic</div>
+          <div class="log-bundle-text">If A77 loads and S109 holds: severity drops to Medium. If S109 slips: severity escalates to Critical.</div>
+          <div class="log-action log-action--active"><span class="material-icons-outlined">sync</span>Re-evaluating every 8 min or on event trigger</div>
+        </div>
+      </div>
+      <div class="panel-content" id="panel-s3">
+        <div class="panel-section-label">Policy applied</div>
+        <div class="log-bundle">
+          <div class="log-bundle-tag">Approval required</div>
+          <div class="log-bundle-text">Customer policy: human approval before carrier outreach. Mitigation pack prepared and awaiting Priya's sign-off.</div>
+          <div class="log-action log-action--done"><span class="material-icons-outlined">check_circle</span>Mitigation pack compiled</div>
+          <div class="log-action log-action--done"><span class="material-icons-outlined">check_circle</span>Outreach drafted for carrier + cross-dock</div>
+          <div class="log-action log-action--active"><span class="material-icons-outlined">pending</span>Awaiting Priya's approval to send</div>
+        </div>
+        <div class="log-bundle" style="margin-top:8px;">
+          <div class="log-bundle-tag">Post-approval tasks</div>
+          <div class="log-bundle-text">On approval: outreach sent, 3 tasks created with owners and due times, monitoring continues.</div>
+          <div class="log-action log-action--active"><span class="material-icons-outlined">sync</span>Monitoring case until stabilized</div>
+        </div>
+      </div>
+      <div class="panel-content" id="panel-s4">
+        <div class="panel-section-label">Critical escalation log</div>
+        <div class="log-bundle">
+          <div class="log-bundle-tag" style="background:var(--color-bg-danger);color:var(--color-text-danger);">Line-Down Imminent</div>
+          <div class="log-bundle-text">S109 slipped. Pack-time missed. Stock-out unavoidable. Severity shifted to Critical.</div>
+          <div class="log-action log-action--done"><span class="material-icons-outlined">notifications_active</span>War-room notification sent — 3 recipients</div>
+          <div class="log-action log-action--done"><span class="material-icons-outlined">check_circle</span>Stakeholder summary dispatched</div>
+          <div class="log-action log-action--done"><span class="material-icons-outlined">check_circle</span>Webhook fired to customer workflow system</div>
+        </div>
+        <div class="log-bundle" style="margin-top:8px;">
+          <div class="log-bundle-tag">Still watching</div>
+          <div class="log-bundle-text">If any transfer clears or ETA recovers, agent immediately re-ranks options and downgrades severity.</div>
+          <div class="log-action log-action--active"><span class="material-icons-outlined">sync</span>Monitoring for any recovery signal</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- SCREEN 1 — Portfolio Triage -->
+<div class="screen active" id="screen-1">
+  <main class="main-content">
+    <div class="content-inner">
+      <p class="page-heading">Stock-Out Risk &nbsp;·&nbsp; <strong>Active Cases</strong></p>
+      <div class="card card--alert card--static">
+        <div class="card-header">
+          <div class="card-title-group">
+            <div class="card-icon card-icon--danger"><span class="material-icons-outlined">warning_amber</span></div>
+            <div>
+              <div class="card-title">SKU A23 × Plant Marysville — Elevated Stock-Out Risk</div>
+              <div class="card-subtitle">Cross-dock dwell detected &nbsp;·&nbsp; 3 inbound shipments evaluated &nbsp;·&nbsp; Updated 4 min ago</div>
+            </div>
+          </div>
+          <div class="card-badge-row"><span class="pill pill--danger"><span class="material-icons-outlined">circle</span>High Risk</span></div>
+        </div>
+        <div class="metrics-row">
+          <div class="metric-chip">
+            <div class="metric-icon-wrap metric-icon-wrap--danger"><span class="material-icons-outlined">schedule</span></div>
+            <div><div class="metric-value metric-value--danger">14:30 today</div><div class="metric-label">Stock-out deadline &nbsp;·&nbsp; Moved 2h earlier</div></div>
+          </div>
+          <div class="metric-chip">
+            <div class="metric-icon-wrap metric-icon-wrap--warning"><span class="material-icons-outlined">hourglass_bottom</span></div>
+            <div><div class="metric-value metric-value--warning">3h 42m</div><div class="metric-label">Time to pack-time deadline</div></div>
+          </div>
+          <div class="metric-chip">
+            <div class="metric-icon-wrap metric-icon-wrap--success"><span class="material-icons-outlined">route</span></div>
+            <div><div class="metric-value metric-value--success">1 of 3</div><div class="metric-label">Viable inbound paths remaining</div></div>
+          </div>
+        </div>
+        <div class="section-label">Why this risk was flagged</div>
+        <div class="action-items">
+          <div class="action-item">
+            <div class="action-item-icon" style="background:var(--color-bg-warning);"><span class="material-icons-outlined" style="color:var(--color-text-warning);">schedule</span></div>
+            <div class="action-item-body"><div class="action-item-label" style="color:var(--color-text-warning);">Deadline moved earlier</div><div class="action-item-text">Stock-out time for SKU A23 updated this morning — deadline tightened by 2 hours to 14:30</div></div>
+          </div>
+          <div class="action-item">
+            <div class="action-item-icon" style="background:var(--color-bg-danger);"><span class="material-icons-outlined" style="color:var(--color-text-danger);">local_shipping</span></div>
+            <div class="action-item-body"><div class="action-item-label" style="color:var(--color-text-danger);">Best shipment missed</div><div class="action-item-text">Shipment S123 latest ETA slipped to 15:10 — now past the revised 14:30 stock-out deadline</div></div>
+          </div>
+          <div class="action-item">
+            <div class="action-item-icon" style="background:var(--color-bg-warning);"><span class="material-icons-outlined" style="color:var(--color-text-warning);">swap_horiz</span></div>
+            <div class="action-item-body"><div class="action-item-label" style="color:var(--color-text-warning);">Cross-dock dwell risk</div><div class="action-item-text">ASN A77 shows Unloaded at IAD cross-dock — no Loaded event within the 4-hour dwell threshold</div></div>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn--secondary" onclick="goToScreen(2)"><span class="material-icons-outlined">timeline</span>View deadline timeline</button>
+          <button class="btn btn--secondary" onclick="goToScreen(3)"><span class="material-icons-outlined">checklist</span>See mitigation plan</button>
+        </div>
+      </div>
+      <div class="card card--static">
+        <div class="card-header" style="margin-bottom:12px;">
+          <div><div class="card-title">Inbound shipment viability — SKU A23</div><div class="card-subtitle">All inbound paths assessed against the 14:30 stock-out deadline</div></div>
+        </div>
+        <table class="shipment-table">
+          <thead><tr><th>Shipment / ASN</th><th>Route</th><th>Latest ETA</th><th>vs. Deadline</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><div class="shipment-id">S109 · ASN B12</div><div class="shipment-sub">Direct inbound</div></td>
+              <td>Direct — no transfer</td>
+              <td><strong style="color:var(--color-text-success)">11:50</strong></td>
+              <td><span class="pill pill--success">+2h 40m buffer</span></td>
+              <td><span class="pill pill--success"><span class="material-icons-outlined">check_circle</span>Viable</span></td>
+            </tr>
+            <tr>
+              <td><div class="shipment-id">A77 · Cross-dock IAD</div><div class="shipment-sub">Transfer required</div></td>
+              <td>IAD cross-dock → Marysville</td>
+              <td><strong style="color:var(--color-text-warning)">Unknown</strong></td>
+              <td><span class="pill pill--warning">Dwell risk</span></td>
+              <td><span class="pill pill--warning"><span class="material-icons-outlined">error_outline</span>At risk</span></td>
+            </tr>
+            <tr>
+              <td><div class="shipment-id">S123 · ASN C04</div><div class="shipment-sub">Direct inbound</div></td>
+              <td>Direct — no transfer</td>
+              <td><strong style="color:var(--color-text-danger)">15:10</strong></td>
+              <td><span class="pill pill--danger">−40m late</span></td>
+              <td><span class="pill pill--danger"><span class="material-icons-outlined">cancel</span>Misses deadline</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+  <div class="ai-chat-bar"><div class="ai-chat-card">
+    <textarea class="ai-chat-textarea" rows="1" placeholder="Ask about SKU A23 risk or request alternative inbound options…"></textarea>
+    <div class="ai-chat-toolbar">
+      <div class="ai-chat-toolbar-left"><button class="ai-chat-icon-btn"><span class="material-icons-outlined">attach_file</span></button></div>
+      <div class="ai-chat-toolbar-right"><button class="ai-chat-icon-btn"><span class="material-icons-outlined">mic_none</span></button><button class="ai-chat-send-btn"><span class="material-icons-outlined">arrow_upward</span></button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- SCREEN 2 — Root Cause & Viability -->
+<div class="screen" id="screen-2">
+  <main class="main-content">
+    <div class="content-inner">
+      <p class="page-heading">Case #3829 &nbsp;·&nbsp; <strong>Root Cause &amp; Viability</strong></p>
+      <div class="card card--static">
+        <div class="card-header" style="margin-bottom:16px;">
+          <div class="card-title-group">
+            <div class="card-icon card-icon--info"><span class="material-icons-outlined">timer</span></div>
+            <div><div class="card-title">Three clocks the agent monitors simultaneously</div><div class="card-subtitle">Deadline drift tracked in real time — severity updates on every signal change</div></div>
+          </div>
+          <span class="live-indicator"><span class="live-dot"></span>Monitoring</span>
+        </div>
+        <div class="timeline-bar">
+          <div class="tl-node"><div class="tl-dot tl-dot--now"></div><span class="tl-label">Now<br>10:48</span></div>
+          <div class="tl-line tl-line--ok"></div>
+          <div class="tl-node"><div class="tl-dot tl-dot--pack"></div><span class="tl-label" style="color:var(--color-text-warning)">Pack-time<br>12:30</span></div>
+          <div class="tl-line tl-line--warn"></div>
+          <div class="tl-node"><div class="tl-dot tl-dot--stock"></div><span class="tl-label tl-label--danger">Stock-out<br>14:30</span></div>
+        </div>
+        <div class="metrics-row">
+          <div class="metric-chip"><div class="metric-icon-wrap metric-icon-wrap--success"><span class="material-icons-outlined">schedule</span></div><div><div class="metric-value metric-value--success">10:48</div><div class="metric-label">Current time · Agent active</div></div></div>
+          <div class="metric-chip"><div class="metric-icon-wrap metric-icon-wrap--warning"><span class="material-icons-outlined">inventory</span></div><div><div class="metric-value metric-value--warning">12:30</div><div class="metric-label">Pack-time deadline · 1h 42m away</div></div></div>
+          <div class="metric-chip"><div class="metric-icon-wrap metric-icon-wrap--danger"><span class="material-icons-outlined">production_quantity_limits</span></div><div><div class="metric-value metric-value--danger">14:30</div><div class="metric-label">Stock-out · Moved 2h earlier today</div></div></div>
+        </div>
+      </div>
+      <div class="card card--static">
+        <div class="card-header" style="margin-bottom:16px;">
+          <div><div class="card-title">Live viability assessment — all inbound paths</div><div class="card-subtitle">Severity updates automatically when ETA, dwell, or deadline signals change</div></div>
+          <span class="pill pill--danger"><span class="material-icons-outlined">circle</span>High</span>
+        </div>
+        <table class="shipment-table">
+          <thead><tr><th>ASN / Shipment</th><th>Signal</th><th>ETA</th><th>Outcome</th><th>Agent action</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><div class="shipment-id">S109 · ASN B12</div><div class="shipment-sub">Direct · No transfer</div></td>
+              <td>ETA confidence: <strong style="color:var(--color-text-success)">High</strong></td>
+              <td><strong style="color:var(--color-text-success)">11:50</strong></td>
+              <td><span class="pill pill--success">Within pack-time</span></td>
+              <td style="font-size:12px;color:var(--color-text-tertiary)">Prioritized · watching</td>
+            </tr>
+            <tr>
+              <td><div class="shipment-id">A77 · Cross-dock IAD</div><div class="shipment-sub">Unloaded 06:12 · No load event</div></td>
+              <td>Dwell: <strong style="color:var(--color-text-warning)">4h+ exceeded</strong></td>
+              <td><strong style="color:var(--color-text-warning)">TBD</strong></td>
+              <td><span class="pill pill--warning">Dwell risk</span></td>
+              <td style="font-size:12px;color:var(--color-text-tertiary)">Reload confirmation drafted</td>
+            </tr>
+            <tr>
+              <td><div class="shipment-id">S123 · ASN C04</div><div class="shipment-sub">ETA slipped 2h since morning</div></td>
+              <td>ETA drift: <strong style="color:var(--color-text-danger)">+2h slip</strong></td>
+              <td><strong style="color:var(--color-text-danger)">15:10</strong></td>
+              <td><span class="pill pill--danger">Past deadline</span></td>
+              <td style="font-size:12px;color:var(--color-text-tertiary)">Recovery ETA requested</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card card--static">
+        <div class="card-header" style="margin-bottom:16px;">
+          <div class="card-title-group">
+            <div class="card-icon card-icon--info"><span class="material-icons-outlined">list_alt</span></div>
+            <div><div class="card-title">Case event feed</div><div class="card-subtitle">Agent-managed timeline — severity re-evaluated on every signal</div></div>
+          </div>
+        </div>
+        <div class="event-feed">
+          <div class="event-row"><div class="event-dot-col"><div class="event-dot event-dot--danger"></div><div class="event-line"></div></div><div class="event-body"><div class="event-title">Cross-dock dwell threshold exceeded — ASN A77</div><div class="event-desc">Unloaded at IAD 06:12 — no Loaded event after 4h. Reload confirmation drafted for carrier outreach.</div><div class="event-time">10:44 &nbsp;·&nbsp; Severity escalated: Medium → High</div></div></div>
+          <div class="event-row"><div class="event-dot-col"><div class="event-dot event-dot--danger"></div><div class="event-line"></div></div><div class="event-body"><div class="event-title">S123 ETA updated to 15:10 — slips past 14:30 deadline</div><div class="event-desc">S123 eliminated from viable paths. Recovery ETA and capacity options request drafted.</div><div class="event-time">09:51 &nbsp;·&nbsp; Severity: High</div></div></div>
+          <div class="event-row"><div class="event-dot-col"><div class="event-dot event-dot--success"></div><div class="event-line"></div></div><div class="event-body"><div class="event-title">S109 direct route confirmed — ETA 11:50, no transfer</div><div class="event-desc">S109 verified as last viable path. ETA 11:50 is within the 12:30 pack-time window. Prioritized.</div><div class="event-time">09:30 &nbsp;·&nbsp; Viable path identified</div></div></div>
+          <div class="event-row"><div class="event-dot-col"><div class="event-dot event-dot--warning"></div></div><div class="event-body"><div class="event-title">Stock-out time updated for SKU A23 — moved to 14:30</div><div class="event-desc">Deadline tightened by 2 hours. Case opened. Inbound path assessment initiated automatically.</div><div class="event-time">08:12 &nbsp;·&nbsp; Case #3829 opened</div></div></div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <div class="ai-chat-bar"><div class="ai-chat-card">
+    <textarea class="ai-chat-textarea" rows="1" placeholder="Ask about deadline timeline or request an alternative scenario…"></textarea>
+    <div class="ai-chat-toolbar">
+      <div class="ai-chat-toolbar-left"><button class="ai-chat-icon-btn"><span class="material-icons-outlined">attach_file</span></button></div>
+      <div class="ai-chat-toolbar-right"><button class="ai-chat-icon-btn"><span class="material-icons-outlined">mic_none</span></button><button class="ai-chat-send-btn"><span class="material-icons-outlined">arrow_upward</span></button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- SCREEN 3 — Orchestrated Mitigation -->
+<div class="screen" id="screen-3">
+  <main class="main-content">
+    <div class="content-inner">
+      <p class="page-heading">Case #3829 &nbsp;·&nbsp; <strong>Mitigation Plan</strong></p>
+      <div class="approval-banner">
+        <span class="material-icons-outlined">pending_actions</span>
+        <div class="approval-banner-body">
+          <div class="approval-banner-title">Your approval required before outreach is sent</div>
+          <div class="approval-banner-desc">Agent has prepared the full mitigation pack below. Per your policy, carrier and cross-dock outreach requires human approval. Review and approve to send.</div>
+        </div>
+        <button class="btn btn--primary" style="white-space:nowrap;flex-shrink:0;"><span class="material-icons-outlined">check</span>Approve &amp; Send</button>
+      </div>
+      <div class="card card--static">
+        <div class="card-header" style="margin-bottom:16px;">
+          <div class="card-title-group">
+            <div class="card-icon card-icon--info"><span class="material-icons-outlined">summarize</span></div>
+            <div><div class="card-title">Mitigation pack — SKU A23 × Plant Marysville</div><div class="card-subtitle">Compiled by agent · Case #3829 · Risk threshold crossed</div></div>
+          </div>
+          <span class="pill pill--danger"><span class="material-icons-outlined">circle</span>High</span>
+        </div>
+        <div class="metrics-row">
+          <div class="metric-chip"><div class="metric-icon-wrap metric-icon-wrap--danger"><span class="material-icons-outlined">schedule</span></div><div><div class="metric-value metric-value--danger">14:30</div><div class="metric-label">Stock-out deadline</div></div></div>
+          <div class="metric-chip"><div class="metric-icon-wrap metric-icon-wrap--warning"><span class="material-icons-outlined">inventory</span></div><div><div class="metric-value metric-value--warning">12:30</div><div class="metric-label">Pack-time · 1h 42m remaining</div></div></div>
+          <div class="metric-chip"><div class="metric-icon-wrap metric-icon-wrap--success"><span class="material-icons-outlined">route</span></div><div><div class="metric-value metric-value--success">S109</div><div class="metric-label">Best viable path · ETA 11:50</div></div></div>
+        </div>
+      </div>
+      <div class="card card--static">
+        <div class="card-header" style="margin-bottom:16px;">
+          <div class="card-title-group">
+            <div class="card-icon card-icon--primary"><span class="material-icons-outlined">checklist</span></div>
+            <div><div class="card-title">Recommended next actions</div><div class="card-subtitle">Structured action plan with identifiers and owners — ready to execute on approval</div></div>
+          </div>
+        </div>
+        <div class="step-list">
+          <div class="step-item"><div class="step-num">1</div><div class="step-content"><div class="step-title">Confirm reload plan for ASN A77 at IAD cross-dock</div><div class="step-desc">Dwell threshold exceeded. Contact cross-dock ops to confirm departure time. If reload confirmed before 11:30, path becomes viable again.</div></div></div>
+          <div class="step-item"><div class="step-num">2</div><div class="step-content"><div class="step-title">Request recovery ETA from S123 carrier</div><div class="step-desc">Shipment S123 ETA slipped to 15:10. Request expedite options or updated ETA. Flag if any recovery path to 13:30 or earlier exists.</div></div></div>
+          <div class="step-item"><div class="step-num">3</div><div class="step-content"><div class="step-title">Verify S109 has no transfer risk — prioritize this path</div><div class="step-desc">S109 is currently the only confirmed viable path with ETA 11:50. Confirm no last-mile handoff or dwell risk. Monitor continuously.</div></div></div>
+        </div>
+      </div>
+      <div class="card card--static">
+        <div class="card-header" style="margin-bottom:12px;">
+          <div class="card-title-group">
+            <div class="card-icon card-icon--info"><span class="material-icons-outlined">mail_outline</span></div>
+            <div><div class="card-title">Pre-written outreach — cross-dock / carrier</div><div class="card-subtitle">Drafted with exact ASN identifiers, stock-out context, and specific asks</div></div>
+          </div>
+          <button class="btn btn--secondary"><span class="material-icons-outlined">edit</span>Edit</button>
+        </div>
+        <div class="msg-draft">
+          <div class="msg-draft-to">To: cross-dock.IAD@carrier.com &nbsp;·&nbsp; CC: ops-lead@plant-marysville.com &nbsp;·&nbsp; Re: ASN A77 · Case #3829</div>
+          <div class="msg-draft-body">Subject: Urgent — ASN A77 Dwell Threshold Exceeded, Reload Confirmation Needed
+
+ASN A77 (SKU A23 → Plant Marysville) was unloaded at your IAD cross-dock at 06:12 today. As of 10:48, no Loaded event has been recorded — 4h+ dwell, threshold exceeded.
+
+Stock-out deadline at Plant Marysville is 14:30 today. Pack-time is 12:30.
+
+Please confirm: (1) Is the reload in progress? (2) What is the estimated departure time?
+
+Contact: case-3829@project44.com — Reference Case #3829.</div>
+        </div>
+        <div class="section-divider"></div>
+        <div class="section-label">Tasks created on approval</div>
+        <div class="action-items">
+          <div class="action-item"><div class="action-item-icon" style="background:var(--color-bg-info);"><span class="material-icons-outlined" style="color:var(--color-text-info);">assignment</span></div><div class="action-item-body"><div class="action-item-label" style="color:var(--color-text-info);">Carrier Ops &nbsp;·&nbsp; Due 11:30</div><div class="action-item-text">Confirm ASN A77 reload plan and estimated departure time from IAD cross-dock</div></div></div>
+          <div class="action-item"><div class="action-item-icon" style="background:var(--color-bg-info);"><span class="material-icons-outlined" style="color:var(--color-text-info);">assignment</span></div><div class="action-item-body"><div class="action-item-label" style="color:var(--color-text-info);">Transportation &nbsp;·&nbsp; Due 11:00</div><div class="action-item-text">Request S123 recovery ETA — confirm any expedite options to Marysville before 13:30</div></div></div>
+          <div class="action-item"><div class="action-item-icon" style="background:var(--color-bg-info);"><span class="material-icons-outlined" style="color:var(--color-text-info);">assignment</span></div><div class="action-item-body"><div class="action-item-label" style="color:var(--color-text-info);">Logistics Lead &nbsp;·&nbsp; Due 11:15</div><div class="action-item-text">Verify S109 has no transfer risk and confirm last-mile handoff to Plant Marysville</div></div></div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <div class="ai-chat-bar"><div class="ai-chat-card">
+    <textarea class="ai-chat-textarea" rows="1" placeholder="Approve, edit outreach, or ask about alternative mitigation options…"></textarea>
+    <div class="ai-chat-toolbar">
+      <div class="ai-chat-toolbar-left"><button class="ai-chat-icon-btn"><span class="material-icons-outlined">attach_file</span></button></div>
+      <div class="ai-chat-toolbar-right"><button class="ai-chat-icon-btn"><span class="material-icons-outlined">mic_none</span></button><button class="ai-chat-send-btn"><span class="material-icons-outlined">arrow_upward</span></button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- SCREEN 4 — Line-Down Imminent -->
+<div class="screen" id="screen-4">
+  <main class="main-content">
+    <div class="content-inner">
+      <p class="page-heading">Case #3829 &nbsp;·&nbsp; <strong>Critical Outcome Management</strong></p>
+      <div class="card card--critical card--static">
+        <div class="card-header" style="margin-bottom:16px;">
+          <div class="card-title-group">
+            <div class="card-icon card-icon--danger"><span class="material-icons-outlined">crisis_alert</span></div>
+            <div><div class="card-title" style="color:var(--color-text-danger)">Line-Down Imminent — Severity: Critical</div><div class="card-subtitle">Last viable shipment slipped · Pack-time missed · Stock-out unavoidable</div></div>
+          </div>
+          <span class="pill pill--danger"><span class="material-icons-outlined">circle</span>Critical</span>
+        </div>
+        <div class="metrics-row">
+          <div class="metric-chip" style="border-color:var(--color-border-danger)"><div class="metric-icon-wrap metric-icon-wrap--danger"><span class="material-icons-outlined">production_quantity_limits</span></div><div><div class="metric-value metric-value--danger">Missed</div><div class="metric-label">Pack-time 12:30 — passed</div></div></div>
+          <div class="metric-chip" style="border-color:var(--color-border-danger)"><div class="metric-icon-wrap metric-icon-wrap--danger"><span class="material-icons-outlined">route</span></div><div><div class="metric-value metric-value--danger">0 of 3</div><div class="metric-label">Viable paths remaining</div></div></div>
+          <div class="metric-chip" style="border-color:var(--color-border-danger)"><div class="metric-icon-wrap metric-icon-wrap--danger"><span class="material-icons-outlined">schedule</span></div><div><div class="metric-value metric-value--danger">14:30</div><div class="metric-label">Stock-out — unavoidable</div></div></div>
+        </div>
+      </div>
+      <div class="card card--static">
+        <div class="card-header" style="margin-bottom:12px;">
+          <div class="card-title-group">
+            <div class="card-icon card-icon--danger"><span class="material-icons-outlined">campaign</span></div>
+            <div><div class="card-title">Escalation triggered per policy</div><div class="card-subtitle">All escalation actions fired automatically on case state shift to Critical</div></div>
+          </div>
+        </div>
+        <div class="esc-grid">
+          <div class="esc-tile"><div class="esc-tile-icon"><span class="material-icons-outlined" style="color:var(--color-text-danger)">notifications_active</span></div><div class="esc-tile-title">War-room notification</div><div class="esc-tile-desc">Sent to ops leadership · 3 recipients · 11:28</div></div>
+          <div class="esc-tile"><div class="esc-tile-icon"><span class="material-icons-outlined" style="color:var(--color-text-warning)">summarize</span></div><div class="esc-tile-title">Stakeholder summary</div><div class="esc-tile-desc">Compiled &amp; dispatched with full event timeline · 11:28</div></div>
+          <div class="esc-tile"><div class="esc-tile-icon"><span class="material-icons-outlined" style="color:var(--color-text-info)">webhook</span></div><div class="esc-tile-title">Webhook fired</div><div class="esc-tile-desc">Sent to customer workflow system · Ref: WH-3829</div></div>
+        </div>
+      </div>
+      <div class="card card--static">
+        <div class="card-header" style="margin-bottom:16px;">
+          <div class="card-title-group">
+            <div class="card-icon card-icon--info"><span class="material-icons-outlined">history</span></div>
+            <div><div class="card-title">Incident story — compiled instantly</div><div class="card-subtitle">What changed · when it changed · which signals drove the outcome · no manual reconstruction needed</div></div>
+          </div>
+        </div>
+        <div class="event-feed">
+          <div class="event-row"><div class="event-dot-col"><div class="event-dot event-dot--danger"></div><div class="event-line"></div></div><div class="event-body"><div class="event-title">S109 ETA slipped to 14:45 — final viable path eliminated</div><div class="event-desc">Last viable path missed pack-time window at 12:30. Stock-out at 14:30 is now unavoidable. Case state shifted to Critical.</div><div class="event-time">12:31 &nbsp;·&nbsp; Case state → Line-Down Imminent</div></div></div>
+          <div class="event-row"><div class="event-dot-col"><div class="event-dot event-dot--danger"></div><div class="event-line"></div></div><div class="event-body"><div class="event-title">Pack-time 12:30 passed — no inbound shipment confirmed on time</div><div class="event-desc">No shipment reached Plant Marysville within the required window. Pack-time deadline crossed.</div><div class="event-time">12:30 &nbsp;·&nbsp; Pack-time breach</div></div></div>
+          <div class="event-row"><div class="event-dot-col"><div class="event-dot event-dot--warning"></div><div class="event-line"></div></div><div class="event-body"><div class="event-title">Outreach approved and sent — awaiting responses from carrier and cross-dock</div><div class="event-desc">Priya approved mitigation pack. Outreach sent to IAD cross-dock and S123 carrier. Tasks created with owners.</div><div class="event-time">10:52 &nbsp;·&nbsp; Mitigation actions dispatched</div></div></div>
+          <div class="event-row"><div class="event-dot-col"><div class="event-dot event-dot--warning"></div><div class="event-line"></div></div><div class="event-body"><div class="event-title">Cross-dock dwell exceeded threshold — ASN A77 at risk</div><div class="event-desc">No Loaded event after 4h. Severity escalated Medium → High. Reload confirmation drafted.</div><div class="event-time">10:44 &nbsp;·&nbsp; Severity escalated</div></div></div>
+          <div class="event-row"><div class="event-dot-col"><div class="event-dot event-dot--danger"></div><div class="event-line"></div></div><div class="event-body"><div class="event-title">S123 ETA slipped to 15:10 — eliminated from viable paths</div><div class="event-desc">Best inbound option missed the revised deadline. S109 identified as last viable path.</div><div class="event-time">09:51 &nbsp;·&nbsp; Path eliminated</div></div></div>
+          <div class="event-row"><div class="event-dot-col"><div class="event-dot event-dot--neutral"></div></div><div class="event-body"><div class="event-title">Case #3829 opened — stock-out time updated for SKU A23</div><div class="event-desc">Deadline moved to 14:30, tightened by 2 hours. Inbound path assessment initiated.</div><div class="event-time">08:12 &nbsp;·&nbsp; Case opened</div></div></div>
+        </div>
+      </div>
+      <div class="card card--success card--static">
+        <div class="card-header" style="margin-bottom:12px;">
+          <div class="card-title-group">
+            <div class="card-icon card-icon--success"><span class="material-icons-outlined">visibility</span></div>
+            <div><div class="card-title">Agent continues watching — case remains open</div><div class="card-subtitle">If any transfer clears or ETA recovers, agent immediately re-ranks options and downgrades severity</div></div>
+          </div>
+          <span class="live-indicator"><span class="live-dot"></span>Still live</span>
+        </div>
+        <div class="monitor-chips">
+          <span class="monitor-chip"><span class="material-icons-outlined">sync</span>ETA recovery signals</span>
+          <span class="monitor-chip"><span class="material-icons-outlined">sync</span>Load events — all ASNs</span>
+          <span class="monitor-chip"><span class="material-icons-outlined">sync</span>Alternative inbound routes</span>
+          <span class="monitor-chip"><span class="material-icons-outlined">sync</span>Cross-dock unload/load</span>
+          <span class="monitor-chip"><span class="material-icons-outlined">sync</span>Customer system acknowledgment</span>
+        </div>
+      </div>
+    </div>
+  </main>
+  <div class="ai-chat-bar"><div class="ai-chat-card">
+    <textarea class="ai-chat-textarea" rows="1" placeholder="Ask about the incident or explore what could have prevented this…"></textarea>
+    <div class="ai-chat-toolbar">
+      <div class="ai-chat-toolbar-left"><button class="ai-chat-icon-btn"><span class="material-icons-outlined">attach_file</span></button></div>
+      <div class="ai-chat-toolbar-right"><button class="ai-chat-icon-btn"><span class="material-icons-outlined">mic_none</span></button><button class="ai-chat-send-btn"><span class="material-icons-outlined">arrow_upward</span></button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- DEMO NAV -->
+<nav class="demo-nav">
+  <span class="demo-nav-label">Demo</span>
+  <button class="demo-step current" id="step-1" onclick="goToScreen(1)"><span class="demo-step-num">1</span>Portfolio Triage</button>
+  <button class="demo-step" id="step-2" onclick="goToScreen(2)"><span class="demo-step-num">2</span>Root Cause &amp; Viability</button>
+  <button class="demo-step" id="step-3" onclick="goToScreen(3)"><span class="demo-step-num">3</span>Orchestrated Mitigation</button>
+  <button class="demo-step" id="step-4" onclick="goToScreen(4)"><span class="demo-step-num">4</span>Line-Down Imminent</button>
+  <div class="demo-nav-arrow">
+    <button class="demo-nav-btn demo-nav-btn--prev" id="btn-prev" onclick="prevScreen()" style="display:none"><span class="material-icons-outlined">arrow_back</span>Back</button>
+    <button class="demo-nav-btn demo-nav-btn--next" id="btn-next" onclick="nextScreen()">Next scene <span class="material-icons-outlined">arrow_forward</span></button>
+  </div>
+</nav>
+
+<script>
+  let current = 1;
+  const total = 4;
+  const panelContents = {
+    1: { subtitleText: 'Monitoring Case #3829 · SKU A23 × Marysville', severity: 'High', severityClass: 'panel-stat-value--danger', time: '3h 42m', timeClass: 'panel-stat-value--warning', paths: '1 of 3', pathsClass: 'panel-stat-value--success' },
+    2: { subtitleText: 'Monitoring Case #3829 · Deadline Timeline', severity: 'High', severityClass: 'panel-stat-value--danger', time: '3h 42m', timeClass: 'panel-stat-value--warning', paths: '1 of 3', pathsClass: 'panel-stat-value--success' },
+    3: { subtitleText: 'Case #3829 · Awaiting Approval', severity: 'High', severityClass: 'panel-stat-value--danger', time: '1h 38m', timeClass: 'panel-stat-value--warning', paths: '1 of 3', pathsClass: 'panel-stat-value--success' },
+    4: { subtitleText: 'Case #3829 · Critical — Line-Down Imminent', severity: 'Critical', severityClass: 'panel-stat-value--danger', time: 'Passed', timeClass: 'panel-stat-value--danger', paths: '0 of 3', pathsClass: 'panel-stat-value--danger' },
+  };
+  function goToScreen(n) {
+    for (let i = 1; i <= total; i++) {
+      document.getElementById('screen-' + i).classList.remove('active');
+      document.getElementById('step-' + i).classList.remove('current');
+    }
+    document.querySelectorAll('.panel-content').forEach(el => el.classList.remove('active'));
+    document.getElementById('screen-' + n).classList.add('active');
+    document.getElementById('step-' + n).classList.add('current');
+    document.getElementById('panel-s' + n).classList.add('active');
+    const p = panelContents[n];
+    document.getElementById('panel-subtitle').textContent = p.subtitleText;
+    const sevEl = document.getElementById('stat-severity');
+    sevEl.textContent = p.severity; sevEl.className = 'panel-stat-value ' + p.severityClass;
+    const timeEl = document.getElementById('stat-time');
+    timeEl.textContent = p.time; timeEl.className = 'panel-stat-value ' + p.timeClass;
+    const pathsEl = document.getElementById('stat-paths');
+    pathsEl.textContent = p.paths; pathsEl.className = 'panel-stat-value ' + p.pathsClass;
+    current = n;
+    document.getElementById('btn-prev').style.display = n > 1 ? 'flex' : 'none';
+    const nextBtn = document.getElementById('btn-next');
+    nextBtn.innerHTML = n === total ? '<span class="material-icons-outlined">replay</span> Restart demo' : 'Next scene <span class="material-icons-outlined">arrow_forward</span>';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  function nextScreen() { current < total ? goToScreen(current + 1) : goToScreen(1); }
+  function prevScreen() { if (current > 1) goToScreen(current - 1); }
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextScreen();
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   prevScreen();
+  });
+</script>
+</body>
+</html>
